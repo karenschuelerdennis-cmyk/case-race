@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eras of knowledge — human, feline & canine dentistry research</title>
+<style>
+  :root{
+    --feline:#D85A30;   /* coral  */
+    --canine:#0F8A66;   /* teal   */
+    --human:#1F6FB2;    /* blue   */
+    --ink:#26261f;
+    --muted:#6f6e66;
+    --faint:#a8a79e;
+    --band-a:#f6f5f0;
+    --band-b:#ffffff;
+    --dormant:#eceae3;
+    --rule:#e2e0d7;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:28px 22px 40px;
+    background:#fbfaf6; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1320px; margin:0 auto;}
+  h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-weight:600; font-size:25px; line-height:1.25; margin:0 0 4px;
+    letter-spacing:.1px;
+  }
+  .sub{color:var(--muted); font-size:14px; margin:0 0 18px; max-width:760px; line-height:1.5;}
+  .legend{
+    display:flex; flex-wrap:wrap; gap:18px 26px; align-items:center;
+    font-size:13px; color:var(--muted); margin:0 0 14px;
+  }
+  .legend .grp{display:flex; gap:16px; align-items:center;}
+  .legend .sp{display:inline-flex; gap:7px; align-items:center; color:var(--ink);}
+  .chip{width:13px; height:13px; border-radius:50%;}
+  .lk{display:inline-flex; gap:7px; align-items:center;}
+  .lk svg{display:block}
+  .chart-scroll{overflow-x:auto; padding-bottom:6px;}
+  .chart-scroll svg{min-width:1000px; width:100%; height:auto; display:block;}
+  text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+  .dot{cursor:pointer; transition:r .12s ease;}
+  .dot:focus{outline:none;}
+  .dot:focus-visible{outline:2px solid #111; outline-offset:2px; border-radius:50%;}
+  .caption{
+    font-size:12.5px; color:var(--muted); line-height:1.6; margin:16px 2px 0;
+    max-width:1000px;
+  }
+  .caption b{color:var(--ink); font-weight:600;}
+  /* tooltip */
+  #tt{
+    position:fixed; z-index:50; max-width:330px; pointer-events:none;
+    background:var(--card); border:1px solid var(--rule);
+    border-radius:10px; box-shadow:0 8px 26px rgba(40,38,28,.16);
+    padding:12px 14px; font-size:13px; line-height:1.5; color:var(--ink);
+    opacity:0; transform:translateY(3px); transition:opacity .12s ease, transform .12s ease;
+  }
+  #tt.show{opacity:1; transform:translateY(0);}
+  #tt .yr{
+    display:inline-block; font-size:11px; font-weight:600; letter-spacing:.3px;
+    padding:2px 8px; border-radius:20px; margin-bottom:7px;
+  }
+  #tt .ti{font-weight:600; font-size:14px; display:block; margin-bottom:5px; line-height:1.35;}
+  #tt .su{color:#3f3e37; margin:0 0 8px;}
+  #tt .so{color:var(--muted); font-style:italic; font-size:12px; border-top:1px solid var(--rule); padding-top:7px; margin:0;}
+  /* ---- toolbar + static export ---- */
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:0 0 16px;}
+  .toolbar button{font:inherit; font-size:13px; font-weight:600; color:#2a2a22; background:#fff;
+    border:1px solid #d4d2c8; border-radius:8px; padding:7px 13px; cursor:pointer;}
+  .toolbar button:hover{background:#f2f1ec; border-color:#bdbbb0;}
+  .toolbar .tg{display:inline-flex; gap:7px; align-items:center; font-size:13px; color:#56554d; cursor:pointer;}
+  .num{pointer-events:none; display:none;}
+  body.numbered .num{display:inline;}
+  /* flattened milestone legend (revealed by toggle or print) */
+  #legend-list{display:none; margin:24px 2px 0; max-width:1120px;}
+  body.numbered #legend-list{display:block;}
+  .leg-title{font-family:Georgia,"Times New Roman",serif; font-size:18px; font-weight:600; margin:0 0 12px;}
+  .leg-grp{margin:0 0 16px; break-inside:avoid;}
+  .leg-gh{display:flex; gap:8px; align-items:center; font-size:14px; font-weight:700; color:#2a2a22; margin:0 0 9px;}
+  .leg-chip{width:12px; height:12px; border-radius:50%;}
+  .leg-items{columns:2; column-gap:30px;}
+  .leg-item{display:flex; gap:9px; break-inside:avoid; margin:0 0 11px;}
+  .leg-n{flex:none; min-width:22px; height:20px; display:inline-flex; align-items:center;
+    justify-content:center; font-size:11px; font-weight:700; border-radius:5px; padding:0 5px;}
+  .leg-tx{display:flex; flex-direction:column;}
+  .leg-h{font-size:13px; color:#2a2a22; line-height:1.35;}
+  .leg-s{font-size:12.5px; color:#54534b; line-height:1.45; margin-top:1px;}
+  .leg-src{font-size:11.5px; color:#85847b; font-style:italic; margin-top:2px;}
+  @media(max-width:760px){ .leg-items{columns:1;} }
+  /* print: flatten to a fully static figure — numbers + legend always shown */
+  @media print{
+    @page{size:landscape; margin:12mm;}
+    body{background:#fff; padding:0;}
+    .toolbar, #tt, .sub{display:none !important;}
+    .chart-scroll{overflow:visible !important;}
+    .chart-scroll svg{min-width:0 !important; width:100% !important;}
+    .num{display:inline !important;}
+    #legend-list{display:block !important; margin-top:18px;}
+    h1{font-size:20px;}
+    .caption{color:#333;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Eras of knowledge: human, feline &amp; canine dentistry research</h1>
+  <p class="sub">A comparative timeline of the milestones that shaped tooth-resorption and dental research across three species. Hover or tap any point for a summary and source.</p>
+
+  <div class="legend">
+    <div class="grp">
+      <span class="sp"><span class="chip" style="background:var(--feline)"></span>Feline</span>
+      <span class="sp"><span class="chip" style="background:var(--canine)"></span>Canine</span>
+      <span class="sp"><span class="chip" style="background:var(--human)"></span>Human</span>
+    </div>
+    <div class="grp">
+      <span class="lk"><svg width="34" height="8"><line x1="1" y1="4" x2="33" y2="4" stroke="#555" stroke-width="2.5"/></svg>active research literature</span>
+      <span class="lk"><svg width="34" height="8"><line x1="1" y1="4" x2="33" y2="4" stroke="#b3b2a8" stroke-width="2" stroke-dasharray="4 4"/></svg>no dedicated research</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button id="btn-svg" type="button" title="Export the chart as a vector SVG for use as a figure">Download SVG</button>
+    <button id="btn-print" type="button" title="Open the print dialog — choose 'Save as PDF', landscape">Print / Save as PDF</button>
+    <label class="tg"><input type="checkbox" id="tg-num"> Show reference numbers &amp; legend</label>
+  </div>
+
+  <div class="chart-scroll">
+    <svg id="chart" viewBox="0 0 1320 430" role="img" aria-labelledby="charttitle chartdesc">
+      <title id="charttitle">Comparative timeline of dentistry research across feline, canine, and human fields</title>
+      <desc id="chartdesc">Three horizontal lanes show research milestones as dots placed within five named era bands. The human lane is active across all eras; the feline lane activates around 1930 and the canine lane around 1988, shown by a transition from a dashed grey line to a solid colored line.</desc>
+    </svg>
+  </div>
+
+  <p class="caption">
+    <b>Reading the figure.</b> The time axis is <b>schematic</b>: the five eras are drawn at equal width and are <b>not</b> to linear scale, so that recent veterinary milestones remain legible alongside millennia of human dental history. A lane's line is <b>dashed and grey</b> through periods with no dedicated research literature for that species, and turns <b>solid and colored</b> once research begins — making visible that the eras apply very differently across species. Era boundaries are a synthesis drawn from where the field-defining papers and classification shifts fall, not a published canonical periodization. Flagged citations (e.g. Miller 1901, Andreasen 1970) should be verified against the primary source.
+  </p>
+
+  <section id="legend-list" aria-label="Milestone reference legend">
+    <h2 class="leg-title">Milestone reference</h2>
+    <div id="leg-body"></div>
+  </section>
+</div>
+
+<div id="tt" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  /* ----------------------------------------------------------------
+     EDIT MILESTONES HERE.
+     era: 0..4  | pos: 0..1 placement within that era band
+     archaeo:true renders a hollow dot (pre-research evidence)
+  ----------------------------------------------------------------- */
+  var SP = {
+    feline:{ y:105, color:"#D85A30", soft:"#FAE7DE", activate:{era:2,pos:0.45} },
+    canine:{ y:218, color:"#0F8A66", soft:"#DCF0E9", activate:{era:3,pos:0.50} },
+    human: { y:331, color:"#1F6FB2", soft:"#E2EEF7", activate:null }  /* solid throughout */
+  };
+
+  var ERAS = [
+    {name:"Pre-scientific",            range:"antiquity – 1700s"},
+    {name:"Foundational",              range:"1700s – 1900"},
+    {name:"Professionalization",       range:"1900 – 1970"},
+    {name:"Classification & specialty",range:"1970 – 2000"},
+    {name:"Molecular & imaging",       range:"2000 – present"}
+  ];
+
+  var DATA = [
+    /* ---------------- FELINE ---------------- */
+    {sp:"feline", era:0, pos:0.55, archaeo:true, year:"~1200s", title:"Disease predates modern study",
+      summary:"Tooth resorption identified in roughly 800-year-old cat skeletons, showing the condition long predates its scientific description.",
+      source:"Discussed in Reiter, Lewis & Okuda 2005, Vet Clin North Am Small Anim Pract 35:913–942"},
+    {sp:"feline", era:2, pos:0.45, year:"1930", title:"Hopewell-Smith 'odontolysis'",
+      summary:"First detailed histopathological description of feline odontolysis — work that was then largely forgotten for decades.",
+      source:"Hopewell-Smith A. Dent Cosmos. 1930;72:323–345"},
+    {sp:"feline", era:3, pos:0.07, year:"1971", title:"Kerebel & Daculsi histology",
+      summary:"Histology and histopathology of the cat tooth characterized.",
+      source:"Kerebel B, Daculsi G. Sci Rech Odontostomatol. 1971;7:29–32"},
+    {sp:"feline", era:3, pos:0.27, year:"1976", title:"Schneck & Osborn: 'neck lesions'",
+      summary:"Landmark short report naming and describing 'neck lesions' in cats' teeth — the modern starting point for feline tooth-resorption research.",
+      source:"Schneck GW, Osborn JW. Vet Rec. 1976;99:100"},
+    {sp:"feline", era:3, pos:0.50, year:"1988", title:"AVDC founded",
+      summary:"American Veterinary Dental College established, professionalizing veterinary dentistry (full AVMA recognition 1995).",
+      source:"American Veterinary Dental College (avdc.org)"},
+    {sp:"feline", era:3, pos:0.69, year:"1995", title:"DuPont: crown amputation study",
+      summary:"Clinical study of crown amputation with intentional root retention for advanced feline resorptive lesions.",
+      source:"DuPont GA. J Vet Dent. 1995;12(1):9–13"},
+    {sp:"feline", era:3, pos:0.84, year:"1998", title:"Reiter rediscovers the 1920s study",
+      summary:"Recovers and contextualizes Hopewell-Smith's forgotten histopathological work on feline 'odontolysis'.",
+      source:"Reiter AM. J Vet Dent. 1998;15(1):35–41"},
+    {sp:"feline", era:3, pos:0.96, year:"1998", title:"FIV–FORL association",
+      summary:"Feline immunodeficiency virus infection linked to an increased incidence of odontoclastic resorptive lesions.",
+      source:"Hofmann-Lehmann R, et al. Vet Immunol Immunopathol. 1998;65:299–308"},
+    {sp:"feline", era:4, pos:0.10, year:"2002", title:"Unveiling the early lesion",
+      summary:"Histologic study characterizing the earliest stage of feline resorptive lesions.",
+      source:"Gorrel C, Larsson A. J Small Anim Pract. 2002;43:482–488"},
+    {sp:"feline", era:4, pos:0.28, year:"2005", title:"Update on etiology",
+      summary:"Comprehensive review of proposed etiologies; the underlying cause remains unknown.",
+      source:"Reiter AM, Lewis JR, Okuda A. Vet Clin North Am Small Anim Pract. 2005;35:913–942"},
+    {sp:"feline", era:4, pos:0.60, year:"2000s+", title:"AVDC standardized terms",
+      summary:"AVDC adopts 'tooth resorption' with Types 1–3 and Stages 1–5 — the modern 'AVDC System'.",
+      source:"AVDC Nomenclature (avdc.org/avdc-nomenclature)"},
+
+    /* ---------------- CANINE ---------------- */
+    {sp:"canine", era:3, pos:0.50, year:"1988", title:"AVDC founded (incl. dogs)",
+      summary:"Veterinary dentistry specialty established, covering canine patients.",
+      source:"American Veterinary Dental College (avdc.org)"},
+    {sp:"canine", era:3, pos:0.76, year:"1998", title:"EVDC established",
+      summary:"European Veterinary Dental College holds its first examinations (Ljubljana).",
+      source:"European Veterinary Dental College"},
+    {sp:"canine", era:3, pos:0.92, year:"1998", title:"Full-mouth radiography in dogs",
+      summary:"Demonstrated the diagnostic value of full-mouth radiography in dogs, revealing subclinical pathology.",
+      source:"Verstraete FJM, Kass PH, Terpak CH. Am J Vet Res. 1998;59:686–691"},
+    {sp:"canine", era:4, pos:0.40, year:"2010", title:"Types of TR in dogs",
+      summary:"Radiographic evaluation of resorption types in dogs; tested the human classification (TR found in 53.6% of dogs).",
+      source:"Peralta S, Verstraete FJM, Kass PH. Am J Vet Res. 2010;71:784–793"},
+    {sp:"canine", era:4, pos:0.53, year:"2010", title:"Extent / staging of TR in dogs",
+      summary:"Evaluated applicability of the 2007 AVDC staging method to canine tooth resorption.",
+      source:"Peralta S, Verstraete FJM, Kass PH. Am J Vet Res. 2010;71:794–798"},
+    {sp:"canine", era:4, pos:0.94, year:"2025", title:"Canine TR literature review",
+      summary:"Recent synthesis of diagnosis, classification, and treatment of the comparatively thin canine TR literature.",
+      source:"Baldwin E, Guillory M, Vall P. J Vet Dent. 2025"},
+
+    /* ---------------- HUMAN ---------------- */
+    {sp:"human", era:0, pos:0.20, year:"~7000 BC", title:"Earliest dental intervention",
+      summary:"Drilled molars from Mehrgarh (Indus Valley) — the earliest known evidence of dentistry.",
+      source:"Coppa A, et al. Nature. 2006;440:755–756"},
+    {sp:"human", era:0, pos:0.55, year:"~2600 BC", title:"Hesy-Ra, the 'first dentist'",
+      summary:"Egyptian official titled 'chief of the dentists' — the earliest named dental practitioner.",
+      source:"Historical record"},
+    {sp:"human", era:1, pos:0.14, year:"1728", title:"Fauchard founds modern dentistry",
+      summary:"'Le Chirurgien Dentiste' systematized dentistry and rejected the 'tooth-worm' theory.",
+      source:"Fauchard P. Le Chirurgien Dentiste. Paris; 1728"},
+    {sp:"human", era:1, pos:0.46, year:"1840", title:"First dental school",
+      summary:"Baltimore College of Dental Surgery — the first dental college.",
+      source:"Historical record"},
+    {sp:"human", era:1, pos:0.66, year:"1846", title:"Ether anesthesia",
+      summary:"First public demonstration of surgical ether anesthesia (Morton, Massachusetts General Hospital).",
+      source:"Historical record"},
+    {sp:"human", era:1, pos:0.90, year:"1895", title:"X-rays discovered",
+      summary:"Röntgen discovers X-rays; the first dental radiograph follows in 1896.",
+      source:"Röntgen WC. 1895"},
+    {sp:"human", era:2, pos:0.06, year:"1901", title:"External cervical resorption",
+      summary:"Miller's early description of what becomes external / invasive cervical resorption.",
+      source:"Miller WD, 1901 (as cited in historical reviews — verify primary source)"},
+    {sp:"human", era:2, pos:0.19, year:"1908", title:"Operative dentistry & cavity classes",
+      summary:"G.V. Black standardizes cavity classification and operative principles.",
+      source:"Black GV. A Work on Operative Dentistry. 1908"},
+    {sp:"human", era:2, pos:0.90, year:"1966", title:"Trauma–resorption link",
+      summary:"Andreasen & Hjørting-Hansen describe surface, replacement and inflammatory resorption after trauma.",
+      source:"Andreasen JO, Hjørting-Hansen E. Acta Odontol Scand. 1966;24:263–306"},
+    {sp:"human", era:3, pos:0.08, year:"1970", title:"Andreasen classification",
+      summary:"Localization / type / trauma classification of resorption established.",
+      source:"Andreasen JO. Scand J Dent Res. 1970;78:329–342 (formal classification often attributed to his 1981 textbook)"},
+    {sp:"human", era:3, pos:0.92, year:"1999", title:"Heithersay 4-class system",
+      summary:"Four-class clinical classification of invasive cervical resorption — the dominant human 2-D scheme.",
+      source:"Heithersay GS. Quintessence Int. 1999;30(1):27–37"},
+    {sp:"human", era:4, pos:0.12, year:"2003", title:"Aetiology-based scheme",
+      summary:"Resorption classified by the source of the stimulating factors.",
+      source:"Fuss Z, Tsesis I, Lin S. Dent Traumatol. 2003;19:175–182"},
+    {sp:"human", era:4, pos:0.35, year:"2009", title:"Human–feline 'missing link'",
+      summary:"Direct cross-species comparison of human and feline invasive cervical resorption — a natural anchor for dual-system grading.",
+      source:"von Arx T, et al. J Endod. 2009;35:904–913"},
+    {sp:"human", era:4, pos:0.68, year:"2018", title:"CBCT 3-D classification",
+      summary:"Patel et al. propose a 3-D (CBCT) classification challenging the 2-D scheme.",
+      source:"Patel S, et al. Int Endod J. 2018;51:1224–1238"},
+    {sp:"human", era:4, pos:0.86, year:"2022", title:"Unifying review",
+      summary:"Two-part review consolidating tooth-resorption terminology and clinical classification.",
+      source:"Abbott PV, Lin S. Dent Traumatol. 2022;38 (edt.12757 / edt.12762)"}
+  ];
+
+  /* ---------------- geometry ---------------- */
+  var SVGNS="http://www.w3.org/2000/svg";
+  var svg=document.getElementById("chart");
+  var L=70, R=30, VW=1320, eW=(VW-L-R)/5;          // era width
+  var bandTop=58, bandBot=372;
+  var plotRight=VW-R;
+
+  function ex(era,pos){ return L + era*eW + pos*eW; }
+  function el(tag,attrs){ var e=document.createElementNS(SVGNS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+  /* era bands */
+  for(var i=0;i<5;i++){
+    var x0=L+i*eW;
+    svg.appendChild(el("rect",{x:x0, y:bandTop, width:eW, height:bandBot-bandTop,
+      fill: i%2===0 ? "#f6f5f0" : "#ffffff"}));
+  }
+  /* dormant shading (behind dashed lanes) */
+  ["feline","canine"].forEach(function(name){
+    var s=SP[name]; if(!s.activate) return;
+    var ax=ex(s.activate.era,s.activate.pos);
+    svg.appendChild(el("rect",{x:L, y:s.y-26, width:ax-L, height:52, rx:9,
+      fill:"#eceae3", opacity:"0.65"}));
+  });
+  /* era separators + top/bottom rules */
+  svg.appendChild(el("line",{x1:L,y1:bandTop,x2:plotRight,y2:bandTop,stroke:"#e2e0d7","stroke-width":1}));
+  svg.appendChild(el("line",{x1:L,y1:bandBot,x2:plotRight,y2:bandBot,stroke:"#cfcdc3","stroke-width":1.2}));
+  for(var j=0;j<=5;j++){
+    var sx=L+j*eW;
+    svg.appendChild(el("line",{x1:sx,y1:bandTop,x2:sx,y2:bandBot+6,stroke:"#d6d4ca","stroke-width":1}));
+  }
+  /* era labels */
+  ERAS.forEach(function(e,idx){
+    var cx=L+idx*eW+eW/2;
+    var t1=el("text",{x:cx,y:392,"text-anchor":"middle","font-size":13,"font-weight":600,fill:"#3f3e37"});
+    t1.textContent=e.name; svg.appendChild(t1);
+    var t2=el("text",{x:cx,y:409,"text-anchor":"middle","font-size":11.5,fill:"#8d8c83"});
+    t2.textContent=e.range; svg.appendChild(t2);
+  });
+
+  /* lane lines (dashed dormant -> solid active) + species labels */
+  Object.keys(SP).forEach(function(name){
+    var s=SP[name];
+    var ax = s.activate ? ex(s.activate.era,s.activate.pos) : L;
+    if(ax>L){
+      svg.appendChild(el("line",{x1:L,y1:s.y,x2:ax,y2:s.y,stroke:"#b6b5ab",
+        "stroke-width":2,"stroke-dasharray":"4 5","stroke-linecap":"round"}));
+    }
+    svg.appendChild(el("line",{x1:ax,y1:s.y,x2:plotRight,y2:s.y,stroke:s.color,
+      "stroke-width":2.6,"stroke-linecap":"round"}));
+    /* lane label at far left */
+    var lab=el("text",{x:8,y:s.y-9,"font-size":13.5,"font-weight":700,fill:s.color});
+    lab.textContent=name.charAt(0).toUpperCase()+name.slice(1);
+    svg.appendChild(lab);
+    var lab2=el("text",{x:8,y:s.y+8,"font-size":10.5,fill:"#9b9a90"});
+    lab2.textContent = s.activate ? "" : "all eras";
+    svg.appendChild(lab2);
+  });
+
+  /* dots + year labels */
+  var tt=document.getElementById("tt");
+  function dotColor(d){ return SP[d.sp].color; }
+
+  DATA.forEach(function(d,idx){ d._n=idx+1; });   /* stable reference numbers */
+
+  DATA.forEach(function(d){
+    var s=SP[d.sp], x=ex(d.era,d.pos), y=s.y;
+    /* year label */
+    var yl=el("text",{x:x,y:y-15,"text-anchor":"middle","font-size":10,fill:"#85847b"});
+    yl.textContent=d.year; svg.appendChild(yl);
+    /* dot */
+    var c=el("circle",{cx:x,cy:y,r:6.5,class:"dot",tabindex:"0",role:"button"});
+    if(d.archaeo){ c.setAttribute("fill","#ffffff"); c.setAttribute("stroke",dotColor(d)); c.setAttribute("stroke-width","2.2"); }
+    else { c.setAttribute("fill",dotColor(d)); c.setAttribute("stroke","#ffffff"); c.setAttribute("stroke-width","1.5"); }
+    c.setAttribute("aria-label", d.title+" ("+d.year+"). "+d.summary+" Source: "+d.source);
+    svg.appendChild(c);
+    /* reference number — hidden until 'numbered' toggle or print */
+    var nt=el("text",{x:x,y:y+17,"text-anchor":"middle","font-size":8.5,"font-weight":600,fill:dotColor(d),"class":"num"});
+    nt.textContent=d._n; svg.appendChild(nt);
+
+    function show(){
+      c.setAttribute("r","8.8");
+      var col=dotColor(d);
+      tt.innerHTML =
+        '<span class="yr" style="background:'+SP[d.sp].soft+';color:'+col+'">'+d.year+'</span>'+
+        '<span class="ti">'+d.title+'</span>'+
+        '<p class="su">'+d.summary+'</p>'+
+        '<p class="so">'+d.source+'</p>';
+      tt.classList.add("show");
+      var r=c.getBoundingClientRect();
+      var tw=tt.offsetWidth, th=tt.offsetHeight;
+      var left=r.left+r.width/2-tw/2;
+      left=Math.max(8,Math.min(left,window.innerWidth-tw-8));
+      var top=r.top-th-12;
+      if(top<8) top=r.bottom+12;
+      tt.style.left=left+"px"; tt.style.top=top+"px";
+    }
+    function hide(){ c.setAttribute("r","6.5"); tt.classList.remove("show"); }
+
+    c.addEventListener("mouseenter",show);
+    c.addEventListener("mouseleave",hide);
+    c.addEventListener("focus",show);
+    c.addEventListener("blur",hide);
+    c.addEventListener("click",function(ev){ ev.stopPropagation(); show(); });
+  });
+
+  /* ---- build flattened legend (screen toggle + print) ---- */
+  (function buildLegend(){
+    var order=["feline","canine","human"];
+    var by={feline:[],canine:[],human:[]};
+    DATA.forEach(function(d){ by[d.sp].push(d); });
+    var host=document.getElementById("leg-body");
+    order.forEach(function(sp){
+      var s=SP[sp];
+      var grp=document.createElement("div"); grp.className="leg-grp";
+      var h=document.createElement("div"); h.className="leg-gh";
+      h.innerHTML='<span class="leg-chip" style="background:'+s.color+'"></span>'+sp.charAt(0).toUpperCase()+sp.slice(1);
+      grp.appendChild(h);
+      var items=document.createElement("div"); items.className="leg-items";
+      by[sp].forEach(function(d){
+        var it=document.createElement("div"); it.className="leg-item";
+        it.innerHTML='<span class="leg-n" style="background:'+s.soft+';color:'+s.color+'">'+d._n+'</span>'+
+          '<span class="leg-tx"><span class="leg-h"><b>'+d.year+'</b> · '+d.title+'</span>'+
+          '<span class="leg-s">'+d.summary+'</span>'+
+          '<span class="leg-src">'+d.source+'</span></span>';
+        items.appendChild(it);
+      });
+      grp.appendChild(items); host.appendChild(grp);
+    });
+  })();
+
+  /* ---- toolbar: numbers toggle, SVG export, print ---- */
+  document.getElementById("tg-num").addEventListener("change",function(){
+    document.body.classList.toggle("numbered", this.checked);
+  });
+  document.getElementById("btn-print").addEventListener("click",function(){ window.print(); });
+  document.getElementById("btn-svg").addEventListener("click",function(){
+    var clone=svg.cloneNode(true);
+    clone.setAttribute("xmlns","http://www.w3.org/2000/svg");
+    clone.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink");
+    clone.setAttribute("width","1320"); clone.setAttribute("height","430");
+    /* match on-screen state: drop numbers if toggle is off */
+    if(!document.body.classList.contains("numbered")){
+      Array.prototype.forEach.call(clone.querySelectorAll(".num"),function(node){ node.parentNode.removeChild(node); });
+    }
+    var st=document.createElementNS(SVGNS,"style");
+    st.textContent="text{font-family:Helvetica,Arial,sans-serif}";
+    clone.insertBefore(st,clone.firstChild);
+    var bg=document.createElementNS(SVGNS,"rect");
+    bg.setAttribute("x","0"); bg.setAttribute("y","0");
+    bg.setAttribute("width","1320"); bg.setAttribute("height","430"); bg.setAttribute("fill","#ffffff");
+    clone.insertBefore(bg, st.nextSibling);
+    var out='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
+    var blob=new Blob([out],{type:"image/svg+xml;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download="dentistry_research_timeline.svg";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  });
+
+  document.addEventListener("click",function(){ tt.classList.remove("show"); });
+})();
+</script>
+</body>
+</html>
