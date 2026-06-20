@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case Race Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f5f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e5e5e0;
+    padding: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+  }
+  h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+  .sub { font-size: 13px; color: #999; margin-top: 3px; }
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: #f5f5f0; }
+  .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .stat {
+    background: #f9f9f7;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #eee;
+  }
+  .stat-val { font-size: 26px; font-weight: 600; }
+  .stat-name { font-size: 11px; color: #999; margin-top: 3px; }
+  .stat-total { font-size: 10px; color: #bbb; margin-top: 1px; }
+  .error-note { font-size: 11px; color: #D85A30; margin-top: 2px; }
+  .track-wrap {
+    background: #f9f9f7;
+    border-radius: 14px;
+    border: 1px solid #eee;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .top-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #bbb;
+  }
+  .racer {
+    display: grid;
+    grid-template-columns: 118px 1fr 70px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .racer:last-child { margin-bottom: 0; }
+  .rname { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track {
+    position: relative;
+    height: 30px;
+    background: #fff;
+    border-radius: 15px;
+    border: 1px solid #e5e5e0;
+  }
+  .fill {
+    height: 100%;
+    border-radius: 15px;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .animal {
+    position: absolute;
+    top: 50%;
+    font-size: 20px;
+    line-height: 1;
+    display: inline-block;
+    transform: translateY(-50%) scaleX(-1);
+    transition: left 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .count { font-size: 12px; font-weight: 500; color: #999; text-align: right; }
+  .pace-wrap { border-top: 1px solid #eee; padding-top: 1rem; }
+  .pace-title { font-size: 12px; color: #bbb; margin-bottom: 8px; }
+  .pace-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+  .on-track { color: #1D9E75; font-weight: 500; }
+  .behind   { color: #D85A30; font-weight: 500; }
+  .updated { font-size: 11px; color: #ccc; text-align: right; margin-top: 1rem; }
+  @media (max-width: 520px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .racer { grid-template-columns: 80px 1fr 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div>
+      <h1>&#127937; Case Race</h1>
+      <div class="sub">Deadline: Dec 31, 2026</div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadData()">
+      <span id="refreshIcon">&#8635;</span> Refresh
+    </button>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-val" style="color:#1D9E75">&mdash;</div><div class="stat-name">Dr. Dennis</div><div class="stat-total">of 256</div></div>
+    <div class="stat"><div class="stat-val" style="color:#378ADD">&mdash;</div><div class="stat-name">Dr. Soltero</div><div class="stat-total">of 128</div></div>
+    <div class="stat"><div class="stat-val" style="color:#BA7517">&mdash;</div><div class="stat-name">Dr. Soltero Resident</div><div class="stat-total">of 256</div></div>
+    <div class="stat"><div class="stat-val" style="color:#9F77DD">&mdash;</div><div class="stat-name">Dr. Taney</div><div class="stat-total">of 128</div></div>
+  </div>
+
+  <div class="track-wrap">
+    <div class="top-labels">
+      <span>&#128678; Start</span>
+      <span>&#127937; Finish &middot; Dec 31, 2026</span>
+    </div>
+    <div id="racers"></div>
+  </div>
+
+  <div class="pace-wrap" id="paceWrap" style="display:none">
+    <div class="pace-title">Pace needed to finish by Dec 31, 2026</div>
+    <div id="paceRows"></div>
+  </div>
+
+  <div class="updated" id="updated"></div>
+</div>
+
+<script>
+var API_KEY = 'AIzaSyDMQHc6P2v-LKdkuFbYLffBLFsCPtxQLN0';
+var FILES = [
+  { id: '1p3WgTUBoUN0hAvyKfL9PhOki2T-iV7BBkvE3OdAymlk', name: 'Dr. Dennis',           total: 256 },
+  { id: '1yczDy6RpYg0jA8vnhIEIgAEaFDHzX4KakUzzjB5hb4Q', name: 'Dr. Soltero',          total: 128 },
+  { id: '1OGtywNMOTVlb7GXvdA6TGCid7lHqO8uTUXBHPPrwaLk', name: 'Dr. Soltero Resident', total: 256 },
+  { id: '17mQ68S_mYziTQJ3rE2gCwuhiHllRPknHJY_g2WulRGg', name: 'Dr. Taney',             total: 128 }
+];
+var COLORS   = ['#1D9E75', '#378ADD', '#BA7517', '#9F77DD'];
+var DEADLINE = new Date('2026-12-31T23:59:59');
+
+function daysLeft() {
+  return Math.max(0, Math.ceil((DEADLINE - new Date()) / 86400000));
+}
+
+function fetchCompleted(fileId) {
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/'
+    + fileId + '/values/Summary!B4?key=' + API_KEY;
+  return fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.values && data.values[0] && data.values[0][0]) {
+        return Number(data.values[0][0]);
+      }
+      return 0;
+    })
+    .catch(function() { return 0; });
+}
+
+function buildTracks(data) {
+  var pcts     = data.map(function(d) { return d.completed / d.total; });
+  var minPct   = Math.min.apply(null, pcts);
+  var minCount = pcts.filter(function(p) { return p === minPct; }).length;
+  var turtleEnabled = minCount === 1;
+
+  var sorted = data.map(function(d, i) { return Object.assign({}, d, { colorIdx: i, pct: pcts[i] }); })
+               .sort(function(a, b) { return b.pct - a.pct; });
+
+  document.getElementById('racers').innerHTML = sorted.map(function(r) {
+    var pctW      = r.pct * 100;
+    var isTurtle  = turtleEnabled && r.pct === minPct;
+    var animal    = isTurtle ? '&#128034;' : '&#128007;';
+    var animalPct = Math.min(Math.max(pctW, 0), 91);
+    var color     = COLORS[r.colorIdx];
+    return '<div class="racer">'
+      + '<div class="rname" title="' + r.name + '">' + r.name + '</div>'
+      + '<div class="track">'
+      + '<div class="fill" style="width:' + pctW + '%;background:' + color + ';opacity:0.85;"></div>'
+      + '<span class="animal" style="left:' + animalPct + '%;">' + animal + '</span>'
+      + '</div>'
+      + '<div class="count">' + r.completed + '/' + r.total + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function buildStats(data) {
+  document.getElementById('stats').innerHTML = data.map(function(d, i) {
+    return '<div class="stat">'
+      + '<div class="stat-val" style="color:' + COLORS[i] + '">' + d.completed + '</div>'
+      + '<div class="stat-name">' + d.name + '</div>'
+      + '<div class="stat-total">of ' + d.total + '</div>'
+      + (d.error ? '<div class="error-note">&#9888; read error</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function buildPace(data) {
+  var dl = daysLeft();
+  document.getElementById('paceWrap').style.display = 'block';
+  document.getElementById('paceRows').innerHTML = data.map(function(d, i) {
+    var needed  = d.total - d.completed;
+    var rate    = dl > 0 ? (needed / dl).toFixed(1) : '&infin;';
+    var onTrack = dl > 0 && needed <= dl;
+    return '<div class="pace-row">'
+      + '<span style="color:' + COLORS[i] + '">' + d.name + '</span>'
+      + '<span class="' + (onTrack ? 'on-track' : 'behind') + '">'
+      + needed + ' left &middot; ' + rate + '/day &middot; ' + dl + 'd remaining'
+      + '</span></div>';
+  }).join('');
+}
+
+function loadData() {
+  var btn  = document.getElementById('refreshBtn');
+  var icon = document.getElementById('refreshIcon');
+  btn.disabled   = true;
+  icon.className = 'spin';
+
+  Promise.all(FILES.map(function(f) {
+    return fetchCompleted(f.id).then(function(completed) {
+      return { name: f.name, completed: Math.min(completed, f.total), total: f.total, error: null };
+    });
+  })).then(function(data) {
+    buildTracks(data);
+    buildStats(data);
+    buildPace(data);
+    document.getElementById('updated').textContent =
+      'Last updated: ' + new Date().toLocaleTimeString();
+    btn.disabled   = false;
+    icon.className = '';
+  }).catch(function() {
+    document.getElementById('updated').textContent = 'Error loading data. Please try again.';
+    document.getElementById('updated').style.color = '#D85A30';
+    btn.disabled   = false;
+    icon.className = '';
+  });
+}
+
+buildTracks([
+  { name: 'Dr. Dennis',           completed: 0, total: 256 },
+  { name: 'Dr. Soltero',          completed: 0, total: 128 },
+  { name: 'Dr. Soltero Resident', completed: 0, total: 256 },
+  { name: 'Dr. Taney',            completed: 0, total: 128 }
+]);
+loadData();
+</script>
+</body>
+</html>
