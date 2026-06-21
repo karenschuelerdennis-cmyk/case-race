@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feline Tooth Resorption — Analytic Question Tree</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --ink:#1d2733; --muted:#5b6b7b; --line:#9aa9b8;
+    --premise:#455a64; --premise-bg:#eceff1;
+    --question:#1565c0; --question-bg:#e3f0fc;
+    --method:#6a4fa3; --method-bg:#efe9f8;
+    --decision:#b26a00; --decision-bg:#fff3e0;
+    --outcome:#2e7d4f; --outcome-bg:#e6f4ec;
+    --alt:#9e2a2b; --alt-bg:#fbeaea;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.4; padding:32px 20px 60px;
+  }
+  .wrap{max-width:1080px; margin:0 auto;}
+  header h1{font-size:1.55rem; margin:0 0 4px; letter-spacing:-.01em;}
+  header p.sub{margin:0 0 6px; color:var(--muted); font-size:.95rem;}
+  header p.q{margin:0 0 20px; color:var(--muted); font-size:.85rem; font-style:italic;}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:10px 18px; padding:14px 16px; background:#fff;
+    border:1px solid #e1e7ec; border-radius:10px; margin-bottom:28px; font-size:.82rem;}
+  .legend span{display:inline-flex; align-items:center; gap:7px; color:var(--muted);}
+  .chip{width:14px; height:14px; border-radius:3px; border:1.5px solid;}
+  .c-prem{background:var(--premise-bg); border-color:var(--premise);}
+  .c-q{background:var(--question-bg); border-color:var(--question);}
+  .c-m{background:var(--method-bg); border-color:var(--method);}
+  .c-d{background:var(--decision-bg); border-color:var(--decision);}
+  .c-o{background:var(--outcome-bg); border-color:var(--outcome);}
+
+  /* tree primitives */
+  .node{border-radius:10px; padding:13px 16px; border:1.5px solid; max-width:760px;
+    margin:0 auto; box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .node .tag{font-size:.66rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; opacity:.8;}
+  .node .ttl{font-weight:650; font-size:1rem; margin-top:3px;}
+  .node .body{font-size:.86rem; color:var(--muted); margin-top:6px;}
+  .node .body b{color:var(--ink); font-weight:600;}
+  .node ul{margin:7px 0 0; padding-left:18px; font-size:.83rem; color:var(--muted);}
+  .node ul li{margin:2px 0;}
+
+  .premise{background:var(--premise-bg); border-color:var(--premise);}
+  .premise .tag{color:var(--premise);}
+  .question{background:var(--question-bg); border-color:var(--question);}
+  .question .tag{color:var(--question);}
+  .method{background:var(--method-bg); border-color:var(--method); border-style:dashed;}
+  .method .tag{color:var(--method);}
+  .decision{background:var(--decision-bg); border-color:var(--decision);}
+  .decision .tag{color:var(--decision);}
+  .outcome{background:var(--outcome-bg); border-color:var(--outcome);}
+  .outcome .tag{color:var(--outcome);}
+  .outcome.alt{background:var(--alt-bg); border-color:var(--alt);}
+  .outcome.alt .tag{color:var(--alt);}
+
+  /* connectors */
+  .conn{width:2px; height:26px; background:var(--line); margin:0 auto;}
+  .conn.short{height:16px;}
+
+  .branchlabel{display:block; text-align:center; font-size:.74rem; font-weight:700;
+    letter-spacing:.05em; color:var(--muted); margin:2px auto;}
+  .lbl-yes{color:var(--outcome);}
+  .lbl-no{color:var(--alt);}
+
+  /* split into two columns */
+  .split{display:flex; gap:24px; justify-content:center; align-items:flex-start; margin-top:4px;}
+  .col{flex:1; max-width:500px; display:flex; flex-direction:column; align-items:center;}
+  .col .node{max-width:100%;}
+  .splitbar{position:relative; height:24px; max-width:760px; margin:0 auto;}
+  .splitbar::before{content:""; position:absolute; top:0; left:25%; right:25%; height:2px; background:var(--line);}
+  .splitbar .down{position:absolute; top:0; width:2px; height:24px; background:var(--line);}
+  .splitbar .down.l{left:25%;} .splitbar .down.r{right:25%;}
+
+  .phase{margin:34px auto 14px; max-width:760px; display:flex; align-items:center; gap:12px;}
+  .phase .num{flex:0 0 auto; width:30px; height:30px; border-radius:50%; background:var(--question);
+    color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:.9rem;}
+  .phase h2{font-size:1.05rem; margin:0; letter-spacing:-.01em;}
+  .phase .hr{flex:1; height:1px; background:#dde4ea;}
+
+  footer{max-width:760px; margin:40px auto 0; font-size:.78rem; color:var(--muted);
+    border-top:1px solid #dde4ea; padding-top:14px;}
+  @media(max-width:680px){.split{flex-direction:column; align-items:center;} .splitbar{display:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tooth Resorption in Cats — Analytic Question Tree</h1>
+    <p class="sub">Decision logic + methodology for the 2026–27 feline classification study (Peralta-style design)</p>
+    <p class="q">Core aims: (1) Is the Andreasen human system applicable to felines? (2) If so, is it better than the AVDC feline system? (3) Can a superior universal feline system be built?</p>
+  </header>
+
+  <div class="legend">
+    <span><i class="chip c-prem"></i>Premise / dataset</span>
+    <span><i class="chip c-q"></i>Analytic question</span>
+    <span><i class="chip c-m"></i>Methodology &amp; metrics</span>
+    <span><i class="chip c-d"></i>Decision node</span>
+    <span><i class="chip c-o"></i>Outcome / conclusion</span>
+  </div>
+
+  <!-- BACKGROUND -->
+  <div class="node premise">
+    <div class="tag">Background</div>
+    <div class="ttl">State of classification before this study</div>
+    <div class="body">
+      <b>Human dentistry:</b> 17 resorption systems; <b>Andreasen (2007)</b> most widely accepted.
+      <b>Feline (vet):</b> one system — <b>AVDC</b> (DuPont &amp; DeBowes, 2000s).
+      <b>Canine (vet):</b> <b>Peralta (2010)</b> compared Andreasen vs AVDC and found the human Andreasen system <i>more applicable</i> to dogs.
+      This study asks whether the same holds for cats — and whether anything better can be built.
+    </div>
+  </div>
+
+  <div class="conn"></div>
+
+  <!-- DATASET -->
+  <div class="node premise">
+    <div class="tag">Step 0 · Shared dataset</div>
+    <div class="ttl">Assemble a single feline resorption sample classified under both systems</div>
+    <ul>
+      <li>Curate feline teeth with confirmed resorptive lesions (intraoral radiographs and/or CBCT; histology where available as ground truth).</li>
+      <li>Multiple calibrated, blinded observers independently classify <b>each lesion under both Andreasen and AVDC</b>.</li>
+      <li>Pre-register thresholds (e.g., "applicable" = near-100% coverage + ≥ substantial agreement, weighted κ ≥ 0.61).</li>
+    </ul>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase"><div class="num">1</div><h2>Is the Andreasen (human) system applicable to felines?</h2><div class="hr"></div></div>
+
+  <div class="node method">
+    <div class="tag">Methodology · Q1</div>
+    <div class="ttl">Apply Andreasen to feline lesions and measure fit (mirrors Peralta's canine step)</div>
+    <ul>
+      <li><b>Coverage / completeness:</b> proportion of feline lesions assignable to an Andreasen category (count "unclassifiable" cases).</li>
+      <li><b>Inter-observer reliability:</b> Fleiss'/weighted Cohen's κ across observers.</li>
+      <li><b>Intra-observer reliability:</b> repeat reads, weighted κ.</li>
+      <li><b>Construct validity:</b> agreement of Andreasen categories with histologic/radiographic ground truth.</li>
+    </ul>
+  </div>
+  <div class="conn short"></div>
+
+  <div class="node decision">
+    <div class="tag">Decision · Q1</div>
+    <div class="ttl">Does Andreasen meet the pre-set applicability thresholds in cats?</div>
+    <div class="body">Coverage near-complete <b>and</b> reliability/validity acceptable?</div>
+  </div>
+
+  <div class="splitbar"><span class="down l"></span><span class="down r"></span></div>
+  <div class="split">
+    <div class="col">
+      <span class="branchlabel lbl-yes">▼ YES — applicable</span>
+      <div class="node outcome">
+        <div class="tag">Finding 1a</div>
+        <div class="ttl">Andreasen is applicable to felines</div>
+        <div class="body">Consistent with Peralta's canine result. <b>Proceed to Phase 2</b> (head-to-head vs AVDC).</div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="branchlabel lbl-no">▼ NO — not applicable</span>
+      <div class="node outcome alt">
+        <div class="tag">Finding 1b</div>
+        <div class="ttl">Andreasen does NOT transfer to felines</div>
+        <div class="body">Diverges from the canine finding. AVDC remains the default; <b>skip the head-to-head and go straight to Phase 3</b> (can a better feline-specific system be built?).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase"><div class="num">2</div><h2>Is Andreasen <em>better than</em> the AVDC feline system?</h2><div class="hr"></div></div>
+
+  <div class="node method">
+    <div class="tag">Methodology · Q2 (Peralta comparison)</div>
+    <div class="ttl">Head-to-head comparison on the same feline dataset</div>
+    <ul>
+      <li><b>Reliability:</b> compare inter-/intra-observer κ for Andreasen vs AVDC.</li>
+      <li><b>Validity:</b> compare each system's correlation with ground-truth lesion type/severity.</li>
+      <li><b>Clinical utility:</b> does the classification predict the correct treatment (e.g., distinguishing inflammatory/Type-1–style resorption needing full extraction vs replacement/Type-2–style favoring crown amputation)?</li>
+      <li><b>Discrimination &amp; granularity:</b> ability to separate clinically distinct lesions without redundant or empty categories.</li>
+    </ul>
+  </div>
+  <div class="conn short"></div>
+
+  <div class="node decision">
+    <div class="tag">Decision · Q2</div>
+    <div class="ttl">Which system performs better for cats?</div>
+  </div>
+
+  <div class="splitbar"><span class="down l"></span><span class="down r"></span></div>
+  <div class="split">
+    <div class="col">
+      <span class="branchlabel lbl-yes">▼ Andreasen superior</span>
+      <div class="node outcome">
+        <div class="tag">Finding 2a</div>
+        <div class="ttl">Human Andreasen system &gt; AVDC for felines</div>
+        <div class="body">Mirrors the canine conclusion. Candidate recommendation: adopt Andreasen for cats — <b>but first test Phase 3.</b></div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="branchlabel lbl-no">▼ AVDC superior / equivalent</span>
+      <div class="node outcome alt">
+        <div class="tag">Finding 2b</div>
+        <div class="ttl">AVDC ≥ Andreasen for felines</div>
+        <div class="body">Feline-specific design holds its own. AVDC stays the working standard — <b>still test Phase 3</b> for a possible improvement.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn"></div>
+  <div class="node premise" style="border-style:dashed;">
+    <div class="tag">Converge</div>
+    <div class="ttl">All Phase 1 &amp; 2 paths feed the synthesis question below</div>
+    <div class="body">Regardless of which existing system wins, pool every reliability/validity/utility result and the catalog of lesions that <i>neither</i> system handled cleanly.</div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase"><div class="num">3</div><h2>Can a superior <em>universal feline</em> system be created?</h2><div class="hr"></div></div>
+
+  <div class="node method">
+    <div class="tag">Methodology · Q3</div>
+    <div class="ttl">Derive and validate a candidate feline-specific system</div>
+    <ul>
+      <li><b>Gap analysis:</b> identify feline lesions/features captured poorly by both systems (e.g., resorption type 1 vs 2 vs 3, ankylosis/replacement vs inflammatory resorption, alveolar bone expansion, location patterns).</li>
+      <li><b>System design:</b> build a candidate classification — possibly a hybrid of Andreasen's structure with feline-specific descriptors.</li>
+      <li><b>Validation:</b> re-score the dataset under the new system; compute reliability, validity, and clinical-utility metrics <b>head-to-head against both AVDC and Andreasen</b>.</li>
+      <li><b>Generalizability:</b> test on a held-out / independent feline sample to confirm it is "universal," not overfit.</li>
+    </ul>
+  </div>
+  <div class="conn short"></div>
+
+  <div class="node decision">
+    <div class="tag">Decision · Q3</div>
+    <div class="ttl">Does the new system beat BOTH AVDC and the human (Andreasen) system?</div>
+  </div>
+
+  <div class="splitbar"><span class="down l"></span><span class="down r"></span></div>
+  <div class="split">
+    <div class="col">
+      <span class="branchlabel lbl-yes">▼ YES — superior on key metrics</span>
+      <div class="node outcome">
+        <div class="tag">Conclusion A</div>
+        <div class="ttl">Recommend a new universal feline classification system</div>
+        <div class="body">More reliable, valid, and clinically useful than AVDC and Andreasen. Propose for adoption + external/multi-center validation.</div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="branchlabel lbl-no">▼ NO — not superior</span>
+      <div class="node outcome alt">
+        <div class="tag">Conclusion B</div>
+        <div class="ttl">Recommend the best existing system</div>
+        <div class="body">Adopt whichever won Phase 2 — Andreasen (if 2a) or AVDC (if 2b / Q1 failed). Document why a novel system was not justified.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Node types: <b>premise</b> sets the data foundation · <b>question</b> states the analytic aim · <b>methodology</b> (dashed) lists the metrics that resolve it · <b>decision</b> applies pre-registered thresholds · <b>outcome</b> records the conclusion each path produces. Comparison metrics throughout follow the Peralta (2010) approach — coverage, inter-/intra-observer agreement (κ), validity against ground truth, and clinical-treatment utility.
+  </footer>
+</div>
+</body>
+</html>
